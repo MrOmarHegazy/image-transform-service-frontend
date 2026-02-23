@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { Upload, Wand2, Link2, Trash2, ShieldCheck, Zap } from "lucide-react";
+import BeforeAfterSlider from "@/components/BeforeAfterSlider";
 import { Button } from "@/components/ui/button";
 
 const steps = [
@@ -27,7 +28,7 @@ export default function Landing() {
           <p className="text-hero-muted text-lg md:text-xl max-w-2xl mx-auto mb-10">
             Upload any image. We strip the background, flip it, and give you a clean hosted URL — ready to use.
           </p>
-          <div className="flex items-center justify-center gap-4">
+          <div className="flex items-center justify-center gap-4 mb-14">
             <Button asChild size="lg" className="text-base px-8 h-12 rounded-full">
               <Link to={user ? "/app" : "/signup"}>Get Started</Link>
             </Button>
@@ -35,6 +36,7 @@ export default function Landing() {
               <Link to="/login">Login</Link>
             </Button>
           </div>
+          <BeforeAfterSlider />
         </div>
       </section>
 
