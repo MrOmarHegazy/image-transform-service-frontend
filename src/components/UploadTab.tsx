@@ -2,10 +2,9 @@ import { useState, useRef, useCallback } from "react";
 import { uploadImage, deleteImage } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { motion, AnimatePresence } from "framer-motion";
 import ProcessingSteps from "./ProcessingSteps";
-import { Upload, Copy, ExternalLink, Download, Trash2, ImageIcon } from "lucide-react";
+import { Upload, Copy, ExternalLink, Download, Trash2, ImageIcon, FileImage } from "lucide-react";
 import type { UploadResponse } from "@/types";
 
 interface Props {
@@ -58,7 +57,7 @@ export default function UploadTab({ onImageChange }: Props) {
       clearTimeout(timer3);
       setStep(4);
       setResult(res);
-      toast({ title: "Image processed!", description: "Your transformed image is ready." });
+      toast({ title: "Processed image is ready." });
       onImageChange();
     } catch (err: any) {
       clearTimeout(timer1);
@@ -92,88 +91,164 @@ export default function UploadTab({ onImageChange }: Props) {
     toast({ title: "URL copied!" });
   };
 
+  const reset = () => {
+    setResult(null);
+    setFile(null);
+    setPreview(null);
+    setStep(-1);
+  };
+
+  const formatSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      {/* Drop zone */}
-      {!result && (
-        <>
-          <div
-            className={`drop-zone rounded-xl p-10 text-center cursor-pointer transition-colors ${dragOver ? "active" : ""}`}
-            onDragOver={e => { e.preventDefault(); setDragOver(true); }}
-            onDragLeave={() => setDragOver(false)}
-            onDrop={onDrop}
-            onClick={() => fileRef.current?.click()}
-            role="button"
-            tabIndex={0}
-            aria-label="Upload image"
-            onKeyDown={e => e.key === "Enter" && fileRef.current?.click()}
-          >
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              className="hidden"
-              onChange={e => handleFile(e.target.files?.[0] ?? null)}
-            />
-            <div className="flex flex-col items-center gap-3">
-              <div className="w-14 h-14 rounded-full bg-accent flex items-center justify-center">
-                <Upload className="h-6 w-6 text-accent-foreground" />
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      {/* Left: Upload */}
+      <div className="space-y-6">
+        <AnimatePresence mode="wait">
+          {!result ? (
+            <motion.div key="upload" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <div
+                className={`drop-zone rounded-2xl p-12 text-center cursor-pointer transition-all ${dragOver ? "active" : ""}`}
+                onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={onDrop}
+                onClick={() => fileRef.current?.click()}
+                role="button"
+                tabIndex={0}
+                aria-label="Upload image"
+                onKeyDown={e => e.key === "Enter" && fileRef.current?.click()}
+              >
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={e => handleFile(e.target.files?.[0] ?? null)}
+                />
+                <div className="flex flex-col items-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-accent flex items-center justify-center">
+                    <Upload className="h-6 w-6 text-accent-foreground" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-foreground">Drop an image here or click to browse</p>
+                    <p className="text-sm text-muted-foreground mt-1">JPG, PNG, or WebP</p>
+                  </div>
+                </div>
               </div>
-              <p className="font-medium">Drop an image here or click to browse</p>
-              <p className="text-sm text-muted-foreground">JPG, PNG, or WebP</p>
-            </div>
-          </div>
 
-          {preview && (
-            <div className="rounded-xl border bg-card p-4 animate-fade-in">
-              <p className="text-sm text-muted-foreground mb-2">Preview</p>
-              <img src={preview} alt="Preview" className="rounded-lg max-h-64 mx-auto object-contain" />
-              <p className="text-sm text-muted-foreground mt-2 truncate">{file?.name}</p>
-            </div>
+              {preview && file && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-6 glass rounded-2xl p-4"
+                >
+                  <div className="flex items-center gap-4">
+                    <img src={preview} alt="Preview" className="w-16 h-16 rounded-xl object-cover" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{file.name}</p>
+                      <p className="text-xs text-muted-foreground">{formatSize(file.size)}</p>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {processing && <ProcessingSteps currentStep={step} />}
+
+              <button
+                onClick={process}
+                disabled={!file || processing}
+                className="w-full h-12 mt-6 rounded-2xl bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-all hover:shadow-lg hover:shadow-primary/20 disabled:opacity-40 disabled:hover:shadow-none flex items-center justify-center gap-2"
+              >
+                {processing ? "Processing…" : "Process image"}
+              </button>
+            </motion.div>
+          ) : (
+            <motion.div key="done" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+              <button
+                onClick={reset}
+                className="w-full h-12 rounded-2xl border border-border text-foreground font-medium hover:bg-secondary/60 transition-all flex items-center justify-center gap-2"
+              >
+                <ImageIcon className="h-4 w-4" /> Process another
+              </button>
+            </motion.div>
           )}
+        </AnimatePresence>
+      </div>
 
-          {processing && <ProcessingSteps currentStep={step} />}
+      {/* Right: Result */}
+      <div className="flex items-start">
+        <AnimatePresence mode="wait">
+          {result ? (
+            <motion.div
+              key="result"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="w-full space-y-5"
+            >
+              <div className="rounded-2xl border border-border overflow-hidden checker-bg">
+                <img src={result.processedUrl} alt="Processed" className="w-full max-h-[400px] object-contain" />
+              </div>
 
-          <Button onClick={process} disabled={!file || processing} className="w-full h-12 text-base rounded-xl">
-            {processing ? "Processing…" : "Process Image"}
-          </Button>
-        </>
-      )}
+              <div className="flex gap-2">
+                <input
+                  readOnly
+                  value={result.processedUrl}
+                  className="flex-1 h-10 px-3 rounded-xl bg-secondary/50 border border-border text-sm font-mono text-foreground truncate focus:outline-none"
+                />
+                <button
+                  onClick={copyUrl}
+                  className="h-10 w-10 rounded-xl border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-all"
+                  aria-label="Copy URL"
+                >
+                  <Copy className="h-4 w-4" />
+                </button>
+              </div>
 
-      {/* Result */}
-      {result && (
-        <div className="space-y-4 animate-fade-in">
-          <div className="rounded-xl border bg-card p-4">
-            <p className="text-sm text-muted-foreground mb-2">Processed Image</p>
-            <img src={result.processedUrl} alt="Processed" className="rounded-lg max-h-80 mx-auto object-contain" />
-          </div>
-
-          <div className="flex gap-2">
-            <Input readOnly value={result.processedUrl} className="font-mono text-sm" />
-            <Button variant="outline" size="icon" onClick={copyUrl} aria-label="Copy URL"><Copy className="h-4 w-4" /></Button>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" asChild>
-              <a href={result.processedUrl} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="mr-2 h-4 w-4" /> Open
-              </a>
-            </Button>
-            <Button variant="outline" asChild>
-              <a href={result.processedUrl} download>
-                <Download className="mr-2 h-4 w-4" /> Download PNG
-              </a>
-            </Button>
-            <Button variant="destructive" onClick={handleDelete}>
-              <Trash2 className="mr-2 h-4 w-4" /> Delete
-            </Button>
-          </div>
-
-          <Button variant="secondary" className="w-full" onClick={() => { setResult(null); setFile(null); setPreview(null); setStep(-1); }}>
-            <ImageIcon className="mr-2 h-4 w-4" /> Process Another
-          </Button>
-        </div>
-      )}
+              <div className="flex flex-wrap gap-2">
+                <a
+                  href={result.processedUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="h-9 px-4 rounded-xl border border-border text-sm flex items-center gap-2 text-foreground hover:bg-secondary/60 transition-all"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" /> Open
+                </a>
+                <a
+                  href={result.processedUrl}
+                  download
+                  className="h-9 px-4 rounded-xl border border-border text-sm flex items-center gap-2 text-foreground hover:bg-secondary/60 transition-all"
+                >
+                  <Download className="h-3.5 w-3.5" /> Download
+                </a>
+                <button
+                  onClick={handleDelete}
+                  className="h-9 px-4 rounded-xl bg-destructive/10 text-destructive text-sm flex items-center gap-2 hover:bg-destructive/20 transition-all"
+                >
+                  <Trash2 className="h-3.5 w-3.5" /> Delete
+                </button>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="empty"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="w-full flex flex-col items-center justify-center py-20 text-center"
+            >
+              <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
+                <FileImage className="h-7 w-7 text-muted-foreground" />
+              </div>
+              <p className="text-muted-foreground text-sm">Your processed image will appear here</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }

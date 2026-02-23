@@ -2,44 +2,40 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap');
-
 @layer base {
   :root {
-    --background: 210 20% 98%;
-    --foreground: 215 25% 12%;
+    --background: 240 5% 97%;
+    --foreground: 240 10% 6%;
 
     --card: 0 0% 100%;
-    --card-foreground: 215 25% 12%;
+    --card-foreground: 240 10% 6%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 215 25% 12%;
+    --popover-foreground: 240 10% 6%;
 
-    --primary: 175 70% 38%;
+    --primary: 221 83% 65%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 18% 93%;
-    --secondary-foreground: 215 25% 12%;
+    --secondary: 240 5% 93%;
+    --secondary-foreground: 240 10% 6%;
 
-    --muted: 210 14% 95%;
-    --muted-foreground: 215 12% 50%;
+    --muted: 240 5% 95%;
+    --muted-foreground: 240 5% 46%;
 
-    --accent: 175 60% 94%;
-    --accent-foreground: 175 70% 25%;
+    --accent: 221 83% 95%;
+    --accent-foreground: 221 83% 45%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214 20% 90%;
-    --input: 214 20% 90%;
-    --ring: 175 70% 38%;
+    --border: 240 6% 90%;
+    --input: 240 6% 90%;
+    --ring: 221 83% 65%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
 
-    --hero-bg: 215 30% 8%;
-    --hero-foreground: 210 20% 96%;
-    --hero-muted: 215 15% 55%;
-    --hero-accent: 175 70% 48%;
+    --surface-glass: 0 0% 100% / 0.72;
+    --surface-glass-border: 0 0% 100% / 0.18;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -50,44 +46,6 @@
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
-
-  .dark {
-    --background: 215 30% 8%;
-    --foreground: 210 20% 96%;
-
-    --card: 215 28% 12%;
-    --card-foreground: 210 20% 96%;
-
-    --popover: 215 28% 12%;
-    --popover-foreground: 210 20% 96%;
-
-    --primary: 175 70% 48%;
-    --primary-foreground: 215 30% 8%;
-
-    --secondary: 215 25% 18%;
-    --secondary-foreground: 210 20% 90%;
-
-    --muted: 215 25% 16%;
-    --muted-foreground: 215 15% 55%;
-
-    --accent: 175 50% 15%;
-    --accent-foreground: 175 70% 60%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 215 25% 20%;
-    --input: 215 25% 20%;
-    --ring: 175 70% 48%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
 }
 
 @layer base {
@@ -95,37 +53,38 @@
     @apply border-border;
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-semibold tracking-tight;
+    font-family: 'Anta', sans-serif;
+    letter-spacing: -0.02em;
+    @apply font-normal;
   }
 }
 
 @layer components {
-  .hero-section {
-    background: hsl(var(--hero-bg));
-    color: hsl(var(--hero-foreground));
+  .glass {
+    background: hsla(var(--surface-glass));
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid hsla(var(--surface-glass-border));
   }
 
-  .hero-gradient {
-    background: linear-gradient(
-      135deg,
-      hsl(175 70% 38%) 0%,
-      hsl(190 65% 45%) 50%,
-      hsl(210 60% 50%) 100%
-    );
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .glass-card {
-    background: hsl(var(--card) / 0.8);
-    backdrop-filter: blur(12px);
-    border: 1px solid hsl(var(--border) / 0.5);
+  .checker-bg {
+    background-image:
+      linear-gradient(45deg, hsl(var(--muted)) 25%, transparent 25%),
+      linear-gradient(-45deg, hsl(var(--muted)) 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, hsl(var(--muted)) 75%),
+      linear-gradient(-45deg, transparent 75%, hsl(var(--muted)) 75%);
+    background-size: 16px 16px;
+    background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
   }
 
   .drop-zone {
@@ -137,17 +96,5 @@
   .drop-zone.active {
     border-color: hsl(var(--primary));
     background: hsl(var(--accent) / 0.5);
-  }
-
-  .step-active {
-    color: hsl(var(--primary));
-  }
-
-  .step-done {
-    color: hsl(var(--primary));
-  }
-
-  .step-pending {
-    color: hsl(var(--muted-foreground));
   }
 }

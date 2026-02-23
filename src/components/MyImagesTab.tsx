@@ -3,10 +3,7 @@ import { listImages, deleteImage } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import type { ImageRecord } from "@/types";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -51,7 +48,6 @@ export default function MyImagesTab({ refreshKey }: Props) {
 
   const confirmDelete = async () => {
     if (!deleteTarget || !token) return;
-    // optimistic
     setImages(prev => prev.filter(i => i.id !== deleteTarget));
     setDeleteTarget(null);
     try {
@@ -81,32 +77,36 @@ export default function MyImagesTab({ refreshKey }: Props) {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Controls */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search by ID or date…" value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+          <input
+            placeholder="Search by ID or date…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="w-full h-10 pl-9 pr-4 rounded-xl bg-secondary/50 border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
+          />
         </div>
-        <Select value={sort} onValueChange={v => setSort(v as any)}>
-          <SelectTrigger className="w-40">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="newest">Newest first</SelectItem>
-            <SelectItem value="oldest">Oldest first</SelectItem>
-          </SelectContent>
-        </Select>
+        <select
+          value={sort}
+          onChange={e => setSort(e.target.value as any)}
+          className="h-10 px-3 rounded-xl bg-secondary/50 border border-border text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
+        >
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+        </select>
       </div>
 
       {/* Loading */}
       {loading && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="rounded-xl border bg-card p-3 space-y-3">
-              <Skeleton className="w-full aspect-square rounded-lg" />
-              <Skeleton className="h-4 w-2/3" />
-              <Skeleton className="h-8 w-full" />
+            <div key={i} className="rounded-2xl border border-border bg-card p-3 space-y-3 animate-pulse">
+              <div className="w-full aspect-square rounded-xl bg-muted" />
+              <div className="h-3 w-2/3 rounded bg-muted" />
+              <div className="h-8 w-full rounded bg-muted" />
             </div>
           ))}
         </div>
@@ -114,61 +114,82 @@ export default function MyImagesTab({ refreshKey }: Props) {
 
       {/* Empty */}
       {!loading && filtered.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col items-center justify-center py-24 text-center"
+        >
+          <div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center mb-5">
             <ImageOff className="h-8 w-8 text-muted-foreground" />
           </div>
-          <h3 className="font-semibold text-lg mb-1">No images yet</h3>
+          <h3 className="font-display text-lg mb-1 text-foreground">No images yet</h3>
           <p className="text-muted-foreground text-sm">Upload and process your first image to see it here.</p>
-        </div>
+        </motion.div>
       )}
 
       {/* Grid */}
       {!loading && filtered.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map(img => (
-            <div key={img.id} className="rounded-xl border bg-card overflow-hidden group animate-fade-in">
-              <div className="aspect-square bg-muted flex items-center justify-center overflow-hidden">
+          {filtered.map((img, i) => (
+            <motion.div
+              key={img.id}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.04 }}
+              className="rounded-2xl border border-border bg-card overflow-hidden group hover:shadow-lg hover:shadow-foreground/5 transition-all duration-300 hover:-translate-y-0.5"
+            >
+              <div className="aspect-square checker-bg flex items-center justify-center overflow-hidden">
                 <img src={img.processedUrl} alt="Processed" className="w-full h-full object-cover" loading="lazy" />
               </div>
-              <div className="p-3 space-y-2">
+              <div className="p-4 space-y-3">
                 <p className="text-xs text-muted-foreground">
                   {new Date(img.createdAt).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                 </p>
                 <div className="flex gap-1.5 flex-wrap">
-                  <Button size="sm" variant="outline" asChild>
-                    <a href={img.processedUrl} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink className="h-3.5 w-3.5" />
-                    </a>
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => copyUrl(img.processedUrl)}>
+                  <a
+                    href={img.processedUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="h-8 w-8 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-all"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                  <button
+                    onClick={() => copyUrl(img.processedUrl)}
+                    className="h-8 w-8 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-all"
+                  >
                     <Copy className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button size="sm" variant="outline" asChild>
-                    <a href={img.processedUrl} download>
-                      <Download className="h-3.5 w-3.5" />
-                    </a>
-                  </Button>
-                  <Button size="sm" variant="destructive" onClick={() => setDeleteTarget(img.id)}>
+                  </button>
+                  <a
+                    href={img.processedUrl}
+                    download
+                    className="h-8 w-8 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-all"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                  </a>
+                  <button
+                    onClick={() => setDeleteTarget(img.id)}
+                    className="h-8 w-8 rounded-lg bg-destructive/10 flex items-center justify-center text-destructive hover:bg-destructive/20 transition-all"
+                  >
                     <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
+                  </button>
                 </div>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
       )}
 
       {/* Delete dialog */}
       <AlertDialog open={!!deleteTarget} onOpenChange={open => !open && setDeleteTarget(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete image?</AlertDialogTitle>
+            <AlertDialogTitle className="font-display">Delete image?</AlertDialogTitle>
             <AlertDialogDescription>This action cannot be undone. The image will be permanently removed.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
+            <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
