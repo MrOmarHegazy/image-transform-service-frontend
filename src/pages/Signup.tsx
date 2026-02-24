@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Wand2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import logoImg from "@/assets/website logo - image transform.png";
 import { motion } from "framer-motion";
 
 export default function Signup() {
@@ -20,12 +21,23 @@ export default function Signup() {
     e.preventDefault();
     setLoading(true);
     try {
-      await signUp(email, password);
-      toast({
-        title: "Account created",
-        description: "You're signed in.",
-      });
-      navigate("/app");
+      const { needsVerification, alreadyExists } = await signUp(email, password);
+      if (alreadyExists) {
+        sessionStorage.setItem("exists_email", email);
+        navigate("/account-exists");
+        return;
+      }
+      if (needsVerification) {
+        sessionStorage.setItem("verify_email", email);
+        toast({
+          title: "Account created",
+          description: "Please check your email to verify your account.",
+        });
+        navigate("/verify-email");
+      } else {
+        toast({ title: "Account created", description: "You're signed in." });
+        navigate("/app");
+      }
     } catch (err: any) {
       toast({
         title: "Signup failed",
@@ -38,7 +50,7 @@ export default function Signup() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-6">
+    <div className="flex min-h-screen items-center justify-center px-6">
       <motion.div
         className="w-full max-w-sm"
         initial={{ opacity: 0, y: 16 }}
@@ -46,9 +58,7 @@ export default function Signup() {
         transition={{ duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] }}
       >
         <Link to="/" className="flex items-center justify-center gap-2.5 mb-10">
-          <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center">
-            <Wand2 className="h-4 w-4 text-primary-foreground" />
-          </div>
+          <img src={logoImg} alt="ImageTransform" className="w-8 h-8 rounded-xl object-cover" />
           <span className="font-heading font-medium text-lg tracking-tight">
             ImageTransform
           </span>
@@ -64,9 +74,7 @@ export default function Signup() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-xs font-medium">
-                Email
-              </Label>
+              <Label htmlFor="email" className="text-xs font-medium">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -77,9 +85,7 @@ export default function Signup() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-xs font-medium">
-                Password
-              </Label>
+              <Label htmlFor="password" className="text-xs font-medium">Password</Label>
               <Input
                 id="password"
                 type="password"
@@ -90,11 +96,7 @@ export default function Signup() {
                 placeholder="••••••••"
               />
             </div>
-            <Button
-              type="submit"
-              className="w-full h-10 rounded-[10px] text-sm"
-              disabled={loading}
-            >
+            <Button type="submit" className="w-full h-10 rounded-[10px] text-sm" disabled={loading}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Create account
             </Button>
@@ -103,12 +105,7 @@ export default function Signup() {
 
         <p className="text-center text-xs text-muted-foreground mt-6">
           Already have an account?{" "}
-          <Link
-            to="/login"
-            className="text-primary hover:underline font-medium"
-          >
-            Sign in
-          </Link>
+          <Link to="/login" className="text-primary hover:underline font-medium">Sign in</Link>
         </p>
       </motion.div>
     </div>

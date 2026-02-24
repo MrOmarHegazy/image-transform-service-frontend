@@ -1,180 +1,216 @@
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
-import { Upload, Wand2, Link2, Trash2, ShieldCheck, ArrowRight, LogOut } from "lucide-react";
+import { Upload, Wand2, Link2, Trash2, ShieldCheck, ArrowRight } from "lucide-react";
+import logoImg from "@/assets/website logo - image transform.png";
 import { motion, useScroll, useSpring } from "framer-motion";
 import BeforeAfterSlider from "@/components/BeforeAfterSlider";
+import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { ProcessSection } from "@/components/ui/how-we-do-it-process-overview";
 
-const steps = [
-  { icon: Upload, title: "Upload", desc: "Drop your image — JPG, PNG, or WebP." },
-  { icon: Wand2, title: "Process", desc: "Background removed and image flipped automatically." },
-  { icon: Link2, title: "Share", desc: "Get a hosted URL you can share anywhere." },
-  { icon: Trash2, title: "Delete", desc: "Remove it when you're done. Full control." },
+const processItems = [
+  { icon: Upload, title: "Upload", description: "Drop your image — JPG, PNG, or WebP. We handle the rest." },
+  { icon: Wand2, title: "Process", description: "Background removed and image flipped automatically in seconds." },
+  { icon: Link2, title: "Share", description: "Get a hosted URL you can share anywhere, anytime." },
+  { icon: Trash2, title: "Delete", description: "Remove any image when you're done. Full control, always." },
 ];
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 20 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: i * 0.1, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] },
-  }),
-};
-
-const jiggle = {
-  hover: {
-    scale: 1.04,
-    rotate: [0, -1.5, 1.5, -1, 1, 0],
-    transition: {
-      scale: { duration: 0.25, ease: "easeOut" },
-      rotate: { duration: 0.5, ease: "easeInOut", repeat: 0 },
-    },
-  },
-};
+const HEADLINE = "Background removed.";
+const CHAR_DELAY = 60;
+const INITIAL_PAUSE = 500;
+const PAUSE_AFTER_TYPE = 350;
+const FLIP_MS = 900;
 
 export default function Landing() {
-  const { user, signOut } = useAuth();
-  const navigate = useNavigate();
-  const { toast } = useToast();
+  const { user } = useAuth();
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, { stiffness: 200, damping: 30 });
 
-  const handleSignOut = async () => {
-    await signOut();
-    toast({ title: "Signed out" });
-  };
+  // 0 = blank, 1 = typing, 2 = flipping, 3 = reveal
+  const [phase, setPhase] = useState(0);
+  const [charIndex, setCharIndex] = useState(0);
+  const reveal = phase >= 3;
+
+  useEffect(() => {
+    if (!reveal) document.body.style.overflow = "hidden";
+    else document.body.style.overflow = "";
+    return () => { document.body.style.overflow = ""; };
+  }, [reveal]);
+
+  useEffect(() => {
+    const t = setTimeout(() => setPhase(1), INITIAL_PAUSE);
+    return () => clearTimeout(t);
+  }, []);
+
+  useEffect(() => {
+    if (phase !== 1) return;
+    if (charIndex >= HEADLINE.length) {
+      const t = setTimeout(() => setPhase(2), PAUSE_AFTER_TYPE);
+      return () => clearTimeout(t);
+    }
+    const t = setTimeout(() => setCharIndex((i) => i + 1), CHAR_DELAY);
+    return () => clearTimeout(t);
+  }, [phase, charIndex]);
+
+  useEffect(() => {
+    if (phase !== 2) return;
+    const t = setTimeout(() => setPhase(3), FLIP_MS + 300);
+    return () => clearTimeout(t);
+  }, [phase]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <div className="flex flex-col min-h-screen">
       {/* Scroll progress */}
       <motion.div
         className="fixed top-0 left-0 right-0 h-[2px] bg-primary z-[60] origin-left"
         style={{ scaleX }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: reveal ? 1 : 0 }}
+        transition={{ duration: 0.3 }}
       />
 
-      {/* Navbar */}
-      <header className="glass-nav fixed top-0 left-0 right-0 z-50 h-16">
-        <div className="max-w-content mx-auto px-6 h-full flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-              <Wand2 className="h-3.5 w-3.5 text-primary-foreground" />
-            </div>
-            <span className="font-heading font-medium text-[15px] tracking-tight text-foreground">
-              ImageTransform
+      {/* Navbar — CSS-only opacity to preserve position:fixed */}
+      <div style={{ opacity: reveal ? 1 : 0, transition: "opacity 0.5s ease 0.1s" }}>
+        <Navbar variant="landing" />
+      </div>
+
+      {/* Hero — full viewport height, text stays exactly where it animated */}
+      <section className="relative min-h-screen flex items-center justify-center pt-16 px-6">
+        <div className="max-w-2xl w-full text-center" style={{ perspective: 1000 }}>
+          <h1
+            className="text-4xl sm:text-5xl md:text-6xl font-heading tracking-[-0.03em] leading-[1.1] text-foreground"
+            style={{ fontWeight: 600 }}
+          >
+            {/* Line 1 — phantom keeps layout stable while characters type in */}
+            <span className="block relative">
+              <span className="invisible select-none" aria-hidden="true">
+                {HEADLINE}
+              </span>
+              <span className="absolute inset-0">
+                {phase >= 3 ? HEADLINE : HEADLINE.slice(0, charIndex)}
+                {phase === 1 && (
+                  <span
+                    className="inline-block w-[3px] bg-foreground ml-0.5 animate-pulse"
+                    style={{
+                      height: "0.85em",
+                      verticalAlign: "baseline",
+                      transform: "translateY(0.08em)",
+                    }}
+                  />
+                )}
+              </span>
             </span>
-          </Link>
-          <nav className="flex items-center gap-2">
+
+            {/* Line 2 — flips from behind line 1 */}
+            <motion.span
+              className="text-primary block"
+              style={{ transformOrigin: "top center" }}
+              initial={{ rotateX: -90, opacity: 0 }}
+              animate={
+                phase >= 2
+                  ? { rotateX: 0, opacity: 1 }
+                  : { rotateX: -90, opacity: 0 }
+              }
+              transition={{
+                duration: FLIP_MS / 1000,
+                ease: [0.16, 1, 0.3, 1],
+              }}
+            >
+              Perfectly mirrored.
+            </motion.span>
+          </h1>
+
+          {/* Subtitle — populates below after intro */}
+          <motion.p
+            className="mt-6 text-base md:text-lg text-muted-foreground leading-relaxed max-w-lg mx-auto"
+            initial={{ opacity: 0, y: 14 }}
+            animate={reveal ? { opacity: 1, y: 0 } : { opacity: 0, y: 14 }}
+            transition={{
+              delay: reveal ? 0.15 : 0,
+              duration: 0.5,
+              ease: [0.25, 0.46, 0.45, 0.94],
+            }}
+          >
+            Upload any image. We strip the background, flip it, and give you
+            a clean hosted URL — ready to use.
+          </motion.p>
+
+          {/* CTA buttons — populate after subtitle */}
+          <motion.div
+            className="mt-10 flex items-center justify-center gap-3"
+            initial={{ opacity: 0, y: 14 }}
+            animate={reveal ? { opacity: 1, y: 0 } : { opacity: 0, y: 14 }}
+            transition={{
+              delay: reveal ? 0.3 : 0,
+              duration: 0.5,
+              ease: [0.25, 0.46, 0.45, 0.94],
+            }}
+          >
             {user ? (
               <>
-                <Button asChild size="sm">
-                  <Link to="/app?tab=images">
-                    Go to Dashboard
-                    <ArrowRight className="h-3.5 w-3.5" />
+                <Button asChild size="lg" className="h-11 px-7 rounded-[12px] text-sm">
+                  <Link to="/app?tab=upload">
+                    Try it now
+                    <ArrowRight className="h-4 w-4" />
                   </Link>
                 </Button>
                 <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleSignOut}
-                  className="text-muted-foreground hover:text-foreground gap-1.5"
+                  asChild
+                  variant="outline"
+                  size="lg"
+                  className="h-11 px-7 rounded-[12px] text-sm"
                 >
-                  <LogOut className="h-3.5 w-3.5" />
-                  Sign out
+                  <Link to="/app?tab=images">My Images</Link>
                 </Button>
               </>
             ) : (
               <>
-                <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-                  <Link to="/login">Sign in</Link>
-                </Button>
-                <Button asChild size="sm">
+                <Button asChild size="lg" className="h-11 px-7 rounded-[12px] text-sm">
                   <Link to="/signup">
-                    Get Started
-                    <ArrowRight className="h-3.5 w-3.5" />
+                    Start transforming
+                    <ArrowRight className="h-4 w-4" />
                   </Link>
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  size="lg"
+                  className="h-11 px-7 rounded-[12px] text-sm"
+                >
+                  <Link to="/login">Sign in</Link>
                 </Button>
               </>
             )}
-          </nav>
-        </div>
-      </header>
-
-      {/* Hero */}
-      <section className="pt-40 pb-24 md:pt-52 md:pb-32 snap-start">
-        <div className="max-w-content mx-auto px-6">
-          <motion.div
-            className="max-w-2xl mx-auto text-center"
-            initial="hidden"
-            animate="visible"
-          >
-            <motion.h1
-              className="text-4xl sm:text-5xl md:text-6xl font-heading tracking-[-0.03em] leading-[1.1] text-foreground"
-              variants={fadeUp}
-              custom={0}
-              style={{ fontWeight: 600 }}
-            >
-              Background removed.
-              <br />
-              <span className="text-primary">Perfectly mirrored.</span>
-            </motion.h1>
-
-            <motion.p
-              className="mt-6 text-base md:text-lg text-muted-foreground leading-relaxed max-w-lg mx-auto"
-              variants={fadeUp}
-              custom={1}
-            >
-              Upload any image. We strip the background, flip it, and give you
-              a clean hosted URL — ready to use.
-            </motion.p>
-
-            <motion.div
-              className="mt-10 flex items-center justify-center gap-3"
-              variants={fadeUp}
-              custom={2}
-            >
-              {user ? (
-                <>
-                  <Button asChild size="lg" className="h-11 px-7 rounded-[12px] text-sm">
-                    <Link to="/app?tab=upload">
-                      Try it now
-                      <ArrowRight className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                  <Button
-                    asChild
-                    variant="outline"
-                    size="lg"
-                    className="h-11 px-7 rounded-[12px] text-sm"
-                  >
-                    <Link to="/app?tab=images">My Images</Link>
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button asChild size="lg" className="h-11 px-7 rounded-[12px] text-sm">
-                    <Link to="/signup">
-                      Start transforming
-                      <ArrowRight className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                  <Button
-                    asChild
-                    variant="outline"
-                    size="lg"
-                    className="h-11 px-7 rounded-[12px] text-sm"
-                  >
-                    <Link to="/login">Sign in</Link>
-                  </Button>
-                </>
-              )}
-            </motion.div>
           </motion.div>
         </div>
+
+        {/* Scroll indicator — mouse icon with animated dot */}
+        <motion.div
+          className="absolute bottom-8 right-8 flex flex-col items-center gap-1.5"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: reveal ? 1 : 0 }}
+          transition={{ delay: reveal ? 0.8 : 0, duration: 0.6 }}
+        >
+          <div className="w-6 h-10 rounded-full border-2 border-muted-foreground/40 flex justify-center pt-1.5">
+            <motion.div
+              className="w-1 h-1.5 rounded-full bg-muted-foreground/60"
+              animate={{ y: [0, 12, 0] }}
+              transition={{
+                duration: 1.8,
+                repeat: Infinity,
+                ease: [0.45, 0, 0.55, 1],
+              }}
+            />
+          </div>
+          <span className="text-[10px] text-muted-foreground/40 tracking-widest uppercase select-none">
+            scroll
+          </span>
+        </motion.div>
       </section>
 
-      {/* Before/After */}
-      <section className="pb-24 md:pb-32 snap-start">
+      {/* Before / After */}
+      <section className="py-28 md:py-36">
         <div className="max-w-content mx-auto px-6">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -188,49 +224,35 @@ export default function Landing() {
       </section>
 
       {/* How it works */}
-      <section className="py-24 md:py-32 snap-start">
-        <div className="max-w-content mx-auto px-6">
-          <motion.div
-            className="text-center mb-16"
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-80px" }}
-            transition={{ duration: 0.5 }}
-          >
-            <h2 className="text-2xl md:text-3xl font-heading tracking-[-0.02em]" style={{ fontWeight: 600 }}>
-              How it works
-            </h2>
-            <p className="mt-3 text-muted-foreground text-sm max-w-md mx-auto">
-              Four simple steps from raw image to polished result.
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {steps.map((s, i) => (
-              <motion.div
-                key={i}
-                className="group rounded-[18px] border bg-card p-6 cursor-default origin-center"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-40px" }}
-                transition={{ delay: i * 0.08, duration: 0.45 }}
-                whileHover="hover"
-                variants={jiggle}
-                style={{ willChange: "transform" }}
-              >
-                <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center mb-4">
-                  <s.icon className="h-[18px] w-[18px] text-accent-foreground" />
-                </div>
-                <h3 className="font-heading font-medium text-[15px] mb-1.5">{s.title}</h3>
-                <p className="text-muted-foreground text-sm leading-relaxed">{s.desc}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <motion.div
+        initial={{ opacity: 0, y: 24 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-80px" }}
+        transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
+      >
+        <ProcessSection
+          subtitle="How It Works"
+          title="Four simple steps"
+          description="From raw image to polished result — upload, process, share, and manage with full control."
+          buttonText={user ? "Try it now" : "Get started"}
+          buttonAction={
+            <Button
+              asChild
+              size="lg"
+              className="h-11 px-7 rounded-[12px] text-sm hover:scale-105 duration-300 transition-all"
+            >
+              <Link to={user ? "/app?tab=upload" : "/signup"}>
+                {user ? "Try it now" : "Get started"}
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          }
+          items={processItems}
+        />
+      </motion.div>
 
       {/* Privacy */}
-      <section className="py-24 border-t snap-start">
+      <section className="py-28 border-t">
         <div className="max-w-content mx-auto px-6">
           <motion.div
             className="text-center max-w-lg mx-auto"
@@ -256,19 +278,25 @@ export default function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t py-8 snap-end">
+      <motion.footer
+        className="border-t py-8"
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true, margin: "-40px" }}
+        transition={{ duration: 0.5 }}
+      >
         <div className="max-w-content mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-6 h-6 rounded-md bg-primary flex items-center justify-center">
-              <Wand2 className="h-3 w-3 text-primary-foreground" />
-            </div>
-            <span className="font-heading font-medium text-sm text-foreground">ImageTransform</span>
+            <img src={logoImg} alt="ImageTransform" className="w-6 h-6 rounded-md object-cover" />
+            <span className="font-heading font-medium text-sm text-foreground">
+              ImageTransform
+            </span>
           </div>
           <p className="text-muted-foreground text-xs">
             &copy; {new Date().getFullYear()} ImageTransform
           </p>
         </div>
-      </footer>
+      </motion.footer>
     </div>
   );
 }

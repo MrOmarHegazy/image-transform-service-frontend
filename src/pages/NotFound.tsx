@@ -13,7 +13,7 @@ export default function NotFound() {
   }, [location.pathname]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
+    <div className="flex min-h-screen items-center justify-center">
       <motion.div
         className="text-center"
         initial={{ opacity: 0, y: 12 }}
