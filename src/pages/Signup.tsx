@@ -1,16 +1,15 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { motion } from "framer-motion";
-import { Loader2, Eye, EyeOff, Scissors } from "lucide-react";
-import Navbar from "@/components/Navbar";
-import PageTransition from "@/components/PageTransition";
+import { Loader2, Zap } from "lucide-react";
 
 export default function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const { signUp } = useAuth();
   const navigate = useNavigate();
@@ -31,79 +30,35 @@ export default function Signup() {
   };
 
   return (
-    <PageTransition>
-      <Navbar />
-      <div className="flex min-h-screen items-center justify-center px-4 pt-20">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="w-full max-w-sm"
-        >
-          <div className="flex items-center justify-center gap-2 mb-8">
-            <Scissors className="h-5 w-5 text-primary" />
-            <span className="font-display text-lg text-foreground">FlipCut</span>
-          </div>
-
-          <div className="glass rounded-2xl p-8 shadow-lg shadow-foreground/5">
-            <h1 className="font-display text-2xl mb-1 text-foreground">Create an account</h1>
-            <p className="text-muted-foreground text-sm mb-8">Get started for free</p>
-
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="space-y-2">
-                <label htmlFor="email" className="text-sm font-medium text-foreground">Email</label>
-                <input
-                  id="email"
-                  type="email"
-                  required
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  className="w-full h-11 px-4 rounded-xl bg-secondary/50 border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label htmlFor="password" className="text-sm font-medium text-foreground">Password</label>
-                <div className="relative">
-                  <input
-                    id="password"
-                    type={showPw ? "text" : "password"}
-                    required
-                    minLength={6}
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full h-11 px-4 pr-10 rounded-xl bg-secondary/50 border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPw(!showPw)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                    aria-label={showPw ? "Hide password" : "Show password"}
-                  >
-                    {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full h-11 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-all hover:shadow-md hover:shadow-primary/20 disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-                Create Account
-              </button>
-            </form>
-          </div>
-
-          <p className="text-center text-sm text-muted-foreground mt-6">
-            Already have an account?{" "}
-            <Link to="/login" className="text-primary hover:underline font-medium">Sign in</Link>
-          </p>
-        </motion.div>
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="w-full max-w-sm animate-fade-in">
+        <div className="flex items-center justify-center gap-2 mb-8">
+          <Zap className="h-6 w-6 text-primary" />
+          <span className="font-bold text-xl">ImageTransform</span>
+        </div>
+        <div className="rounded-xl border bg-card p-6 shadow-sm">
+          <h1 className="text-2xl font-bold mb-1">Create an account</h1>
+          <p className="text-muted-foreground text-sm mb-6">Get started for free</p>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input id="password" type="password" required minLength={6} value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" />
+            </div>
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Create Account
+            </Button>
+          </form>
+        </div>
+        <p className="text-center text-sm text-muted-foreground mt-4">
+          Already have an account?{" "}
+          <Link to="/login" className="text-primary hover:underline font-medium">Sign in</Link>
+        </p>
       </div>
-    </PageTransition>
+    </div>
   );
 }

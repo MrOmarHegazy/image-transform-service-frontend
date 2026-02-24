@@ -1,61 +1,62 @@
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
-import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import UploadTab from "@/components/UploadTab";
 import MyImagesTab from "@/components/MyImagesTab";
-import { Upload, Images } from "lucide-react";
-import Navbar from "@/components/Navbar";
-import PageTransition from "@/components/PageTransition";
+import { LogOut, Upload, Images, Zap } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [refreshKey, setRefreshKey] = useState(0);
-  const [tab, setTab] = useState<"upload" | "images">("upload");
+
+  const handleLogout = async () => {
+    await signOut();
+    toast({ title: "Logged out" });
+    navigate("/");
+  };
 
   return (
-    <PageTransition>
-      <Navbar />
-      <div className="min-h-screen pt-24 pb-12">
-        <div className="container mx-auto px-4 max-w-[1100px]">
-          {/* Tab switcher */}
-          <div className="flex items-center gap-1 mb-8 glass rounded-2xl p-1.5 w-fit">
-            <button
-              onClick={() => setTab("upload")}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                tab === "upload"
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Upload className="h-4 w-4" /> Upload & Process
-            </button>
-            <button
-              onClick={() => setTab("images")}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                tab === "images"
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Images className="h-4 w-4" /> My Images
-            </button>
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Top nav */}
+      <header className="border-b sticky top-0 bg-background/80 backdrop-blur-sm z-30">
+        <div className="container mx-auto px-4 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-2 font-bold">
+            <Zap className="h-5 w-5 text-primary" />
+            ImageTransform
           </div>
-
-          {/* Content */}
-          <motion.div
-            key={tab}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            {tab === "upload" ? (
-              <UploadTab onImageChange={() => setRefreshKey(k => k + 1)} />
-            ) : (
-              <MyImagesTab refreshKey={refreshKey} />
-            )}
-          </motion.div>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-muted-foreground hidden sm:inline">{user?.email}</span>
+            <Button variant="outline" size="sm" onClick={handleLogout}>
+              <LogOut className="h-4 w-4 mr-1.5" /> Logout
+            </Button>
+          </div>
         </div>
-      </div>
-    </PageTransition>
+      </header>
+
+      {/* Content */}
+      <main className="flex-1 container mx-auto px-4 py-6">
+        <Tabs defaultValue="upload" className="space-y-6">
+          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
+            <TabsTrigger value="upload" className="gap-2">
+              <Upload className="h-4 w-4" /> Upload & Process
+            </TabsTrigger>
+            <TabsTrigger value="images" className="gap-2">
+              <Images className="h-4 w-4" /> My Images
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="upload">
+            <UploadTab onImageChange={() => setRefreshKey(k => k + 1)} />
+          </TabsContent>
+          <TabsContent value="images">
+            <MyImagesTab refreshKey={refreshKey} />
+          </TabsContent>
+        </Tabs>
+      </main>
+    </div>
   );
 }
