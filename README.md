@@ -1,73 +1,118 @@
-# Welcome to your Lovable project
+# Image Transformation Service — Frontend
 
-## Project info
+React + TypeScript (Vite) web application that allows authenticated users to upload an image, remove its background, flip it horizontally, and manage processed images.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+---
 
-## How can I edit this code?
 
-There are several ways of editing your application.
+<img width="1040" height="614" alt="before-after" src="https://github.com/user-attachments/assets/64091fb4-597a-42a6-95a1-0c53de1508d9" />
 
-**Use Lovable**
+---
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## Live
 
-Changes made via Lovable will be committed automatically to this repo.
+Frontend:  
+https://image-transform-service-frontend.vercel.app  
 
-**Use your preferred IDE**
+Backend API:  
+https://image-transform-service-backend.onrender.com  
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+Health Check:  
+https://image-transform-service-backend.onrender.com/health  
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+---
 
-Follow these steps:
+## Features
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+- Supabase email/password authentication
+- Email verification flow
+- Single image upload (JPG / PNG / WebP)
+- Background removal + horizontal flip processing
+- Real-time loading states and feedback
+- Personal image gallery
+- Delete with ownership enforcement
+- Responsive navigation (desktop + mobile)
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+---
 
-# Step 3: Install the necessary dependencies.
-npm i
+## Architecture
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+**Frontend**
+- Handles authentication via Supabase
+- Retrieves Supabase JWT access token
+- Sends authenticated requests to backend
+- Manages UI state and user experience
+
+**Backend**
+- Validates Supabase JWT
+- Processes images (Clipdrop + sharp)
+- Stores files in Supabase Storage
+- Persists metadata in Postgres
+- Enforces ownership
+
+**Auth Flow**
+1. User signs in with Supabase.
+2. Supabase returns a session with an access token.
+3. Frontend attaches: authorization: bearer <access_token> to all backend API requests.
+4. Backend validates token before processing.
+
+---
+
+## Tech Stack
+
+- React
+- TypeScript
+- Vite
+- Supabase JS (Auth)
+- Fetch API
+- Tailwind CSS
+- Deployed on Vercel
+
+---
+
+## Environment Variables
+
+Create a local `.env` file (do not commit):
+
+```env
+VITE_SUPABASE_URL=https://<your-project>.supabase.co
+VITE_SUPABASE_ANON_KEY=<your-anon-public-key>
+VITE_API_BASE_URL=https://image-transform-service-backend.onrender.com
 ```
 
-**Edit a file directly in GitHub**
+### Notes
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+- The anon key is safe for frontend use.
+- All privileged operations occur in the backend.
 
-**Use GitHub Codespaces**
+---
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
 
-## What technologies are used for this project?
+## Run Locally
+bash
+Development (hot-reload)
+```
+npm install
+npm run dev
+```
+Then Open
+```
+http://localhost:5173
+```
 
-This project is built with:
+## API Contract
+### Endpoints
+- POST   /api/images
+- GET    /api/images
+- DELETE /api/images/:id
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+---
 
-## How can I deploy this project?
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+## Testing
+1. Register (verify email).
+2. Upload image.
+3. Confirm processed result.
+4. Verify appears in gallery.
+5. Refresh → session persists.
+6. Delete → confirm removal.
