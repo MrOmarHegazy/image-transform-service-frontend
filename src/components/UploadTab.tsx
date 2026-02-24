@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import ProcessingSteps from "./ProcessingSteps";
 import {
   Upload,
-  Copy,
+  Link2,
   ExternalLink,
   Download,
   Trash2,
@@ -48,14 +48,11 @@ export default function UploadTab({ onImageChange }: Props) {
     setStep(-1);
   };
 
-  const onDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      setDragOver(false);
-      handleFile(e.dataTransfer.files?.[0] ?? null);
-    },
-    []
-  );
+  const onDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    handleFile(e.dataTransfer.files?.[0] ?? null);
+  }, []);
 
   const process = async () => {
     if (!file || !token) return;
@@ -117,6 +114,28 @@ export default function UploadTab({ onImageChange }: Props) {
     navigator.clipboard.writeText(result.processedUrl);
     toast({ title: "URL copied" });
   };
+
+  const downloadImage = useCallback(async () => {
+    if (!result) return;
+    try {
+      const res = await fetch(result.processedUrl);
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = `image-${result.id.slice(0, 8)}.png`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+    } catch {
+      toast({
+        title: "Download failed",
+        description: "Could not download the image.",
+        variant: "destructive",
+      });
+    }
+  }, [result, toast]);
 
   const reset = () => {
     setResult(null);
@@ -243,7 +262,7 @@ export default function UploadTab({ onImageChange }: Props) {
                 onClick={copyUrl}
                 aria-label="Copy URL"
               >
-                <Copy className="h-3.5 w-3.5" />
+                <Link2 className="h-3.5 w-3.5" />
               </Button>
             </div>
 
@@ -257,10 +276,8 @@ export default function UploadTab({ onImageChange }: Props) {
                   <ExternalLink className="mr-1.5 h-3.5 w-3.5" /> Open
                 </a>
               </Button>
-              <Button variant="outline" size="sm" asChild>
-                <a href={result.processedUrl} download>
-                  <Download className="mr-1.5 h-3.5 w-3.5" /> Download
-                </a>
+              <Button variant="outline" size="sm" onClick={downloadImage}>
+                <Download className="mr-1.5 h-3.5 w-3.5" /> Save
               </Button>
               <Button
                 variant="destructive"

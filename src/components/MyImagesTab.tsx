@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { listImages, deleteImage } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   ExternalLink,
-  Copy,
+  Link2,
   Download,
   Trash2,
   ImageOff,
@@ -103,6 +103,27 @@ export default function MyImagesTab({ refreshKey }: Props) {
     navigator.clipboard.writeText(url);
     toast({ title: "URL copied" });
   };
+
+  const downloadImage = useCallback(async (url: string, id: string) => {
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = `image-${id.slice(0, 8)}.png`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+    } catch {
+      toast({
+        title: "Download failed",
+        description: "Could not download the image.",
+        variant: "destructive",
+      });
+    }
+  }, [toast]);
 
   return (
     <div className="space-y-6">
@@ -199,7 +220,8 @@ export default function MyImagesTab({ refreshKey }: Props) {
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      <ExternalLink className="h-3 w-3" />
+                      <ExternalLink className="h-3 w-3 mr-1" />
+                      Open
                     </a>
                   </Button>
                   <Button
@@ -207,12 +229,16 @@ export default function MyImagesTab({ refreshKey }: Props) {
                     variant="outline"
                     onClick={() => copyUrl(img.processedUrl)}
                   >
-                    <Copy className="h-3 w-3" />
+                    <Link2 className="h-3 w-3 mr-1" />
+                    URL
                   </Button>
-                  <Button size="sm" variant="outline" asChild>
-                    <a href={img.processedUrl} download>
-                      <Download className="h-3 w-3" />
-                    </a>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => downloadImage(img.processedUrl, img.id)}
+                  >
+                    <Download className="h-3 w-3 mr-1" />
+                    Save
                   </Button>
                   <Button
                     size="sm"

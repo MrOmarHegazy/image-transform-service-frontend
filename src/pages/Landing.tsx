@@ -1,9 +1,10 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
-import { Upload, Wand2, Link2, Trash2, ShieldCheck, ArrowRight } from "lucide-react";
+import { Upload, Wand2, Link2, Trash2, ShieldCheck, ArrowRight, LogOut } from "lucide-react";
 import { motion, useScroll, useSpring } from "framer-motion";
 import BeforeAfterSlider from "@/components/BeforeAfterSlider";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 const steps = [
   { icon: Upload, title: "Upload", desc: "Drop your image — JPG, PNG, or WebP." },
@@ -33,9 +34,16 @@ const jiggle = {
 };
 
 export default function Landing() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, { stiffness: 200, damping: 30 });
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast({ title: "Signed out" });
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -58,12 +66,23 @@ export default function Landing() {
           </Link>
           <nav className="flex items-center gap-2">
             {user ? (
-              <Button asChild size="sm">
-                <Link to="/app">
-                  Go to Dashboard
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Link>
-              </Button>
+              <>
+                <Button asChild size="sm">
+                  <Link to="/app?tab=images">
+                    Go to Dashboard
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleSignOut}
+                  className="text-muted-foreground hover:text-foreground gap-1.5"
+                >
+                  <LogOut className="h-3.5 w-3.5" />
+                  Sign out
+                </Button>
+              </>
             ) : (
               <>
                 <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
@@ -82,7 +101,7 @@ export default function Landing() {
       </header>
 
       {/* Hero */}
-      <section className="pt-40 pb-24 md:pt-52 md:pb-32">
+      <section className="pt-40 pb-24 md:pt-52 md:pb-32 snap-start">
         <div className="max-w-content mx-auto px-6">
           <motion.div
             className="max-w-2xl mx-auto text-center"
@@ -114,30 +133,54 @@ export default function Landing() {
               variants={fadeUp}
               custom={2}
             >
-              <Button asChild size="lg" className="h-11 px-7 rounded-[12px] text-sm">
-                <Link to={user ? "/app" : "/signup"}>
-                  {user ? "Go to Dashboard" : "Start transforming"}
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-              {!user && (
-                <Button
-                  asChild
-                  variant="outline"
-                  size="lg"
-                  className="h-11 px-7 rounded-[12px] text-sm"
-                >
-                  <Link to="/login">Sign in</Link>
-                </Button>
+              {user ? (
+                <>
+                  <Button asChild size="lg" className="h-11 px-7 rounded-[12px] text-sm">
+                    <Link to="/app?tab=upload">
+                      Try it now
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="lg"
+                    className="h-11 px-7 rounded-[12px] text-sm"
+                  >
+                    <Link to="/app?tab=images">My Images</Link>
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button asChild size="lg" className="h-11 px-7 rounded-[12px] text-sm">
+                    <Link to="/signup">
+                      Start transforming
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="lg"
+                    className="h-11 px-7 rounded-[12px] text-sm"
+                  >
+                    <Link to="/login">Sign in</Link>
+                  </Button>
+                </>
               )}
             </motion.div>
           </motion.div>
+        </div>
+      </section>
 
+      {/* Before/After */}
+      <section className="pb-24 md:pb-32 snap-start">
+        <div className="max-w-content mx-auto px-6">
           <motion.div
-            className="mt-16 md:mt-20"
             initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
             <BeforeAfterSlider />
           </motion.div>
@@ -145,7 +188,7 @@ export default function Landing() {
       </section>
 
       {/* How it works */}
-      <section className="py-24 md:py-32">
+      <section className="py-24 md:py-32 snap-start">
         <div className="max-w-content mx-auto px-6">
           <motion.div
             className="text-center mb-16"
@@ -187,7 +230,7 @@ export default function Landing() {
       </section>
 
       {/* Privacy */}
-      <section className="py-24 border-t">
+      <section className="py-24 border-t snap-start">
         <div className="max-w-content mx-auto px-6">
           <motion.div
             className="text-center max-w-lg mx-auto"
@@ -213,7 +256,7 @@ export default function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t py-8">
+      <footer className="border-t py-8 snap-end">
         <div className="max-w-content mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
             <div className="w-6 h-6 rounded-md bg-primary flex items-center justify-center">
