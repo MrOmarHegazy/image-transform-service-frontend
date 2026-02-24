@@ -6,8 +6,9 @@ async function request<T>(path: string, token: string, init?: RequestInit): Prom
   const res = await fetch(`${BASE_URL}${path}`, {
     ...init,
     headers: {
-      Authorization: `Bearer ${token}`,
       ...(init?.headers ?? {}),
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
     },
   });
   if (!res.ok) {

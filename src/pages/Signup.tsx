@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Zap } from "lucide-react";
+import { Loader2, Wand2 } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function Signup() {
   const [email, setEmail] = useState("");
@@ -20,45 +21,96 @@ export default function Signup() {
     setLoading(true);
     try {
       await signUp(email, password);
-      toast({ title: "Account created!", description: "You're signed in." });
+      toast({
+        title: "Account created",
+        description: "You're signed in.",
+      });
       navigate("/app");
     } catch (err: any) {
-      toast({ title: "Signup failed", description: err.message, variant: "destructive" });
+      toast({
+        title: "Signup failed",
+        description: err.message,
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="w-full max-w-sm animate-fade-in">
-        <div className="flex items-center justify-center gap-2 mb-8">
-          <Zap className="h-6 w-6 text-primary" />
-          <span className="font-bold text-xl">ImageTransform</span>
-        </div>
-        <div className="rounded-xl border bg-card p-6 shadow-sm">
-          <h1 className="text-2xl font-bold mb-1">Create an account</h1>
-          <p className="text-muted-foreground text-sm mb-6">Get started for free</p>
-          <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="flex min-h-screen items-center justify-center bg-background px-6">
+      <motion.div
+        className="w-full max-w-sm"
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] }}
+      >
+        <Link to="/" className="flex items-center justify-center gap-2.5 mb-10">
+          <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center">
+            <Wand2 className="h-4 w-4 text-primary-foreground" />
+          </div>
+          <span className="font-heading font-medium text-lg tracking-tight">
+            ImageTransform
+          </span>
+        </Link>
+
+        <div className="rounded-[18px] border bg-card p-7 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+          <h1 className="text-xl font-heading font-medium tracking-tight mb-1">
+            Create an account
+          </h1>
+          <p className="text-muted-foreground text-sm mb-7">
+            Get started for free
+          </p>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" />
+              <Label htmlFor="email" className="text-xs font-medium">
+                Email
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+              />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" required minLength={6} value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" />
+              <Label htmlFor="password" className="text-xs font-medium">
+                Password
+              </Label>
+              <Input
+                id="password"
+                type="password"
+                required
+                minLength={6}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+              />
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button
+              type="submit"
+              className="w-full h-10 rounded-[10px] text-sm"
+              disabled={loading}
+            >
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Create Account
+              Create account
             </Button>
           </form>
         </div>
-        <p className="text-center text-sm text-muted-foreground mt-4">
+
+        <p className="text-center text-xs text-muted-foreground mt-6">
           Already have an account?{" "}
-          <Link to="/login" className="text-primary hover:underline font-medium">Sign in</Link>
+          <Link
+            to="/login"
+            className="text-primary hover:underline font-medium"
+          >
+            Sign in
+          </Link>
         </p>
-      </div>
+      </motion.div>
     </div>
   );
 }

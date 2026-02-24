@@ -1,6 +1,8 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
+
+const IDLE_TIMEOUT_MS = 20 * 60 * 1000; // 20 minutes
 
 interface AuthContextType {
   user: User | null;
@@ -18,6 +20,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const performSignOut = useCallback(async () => {
+    if (!supabase) return;
+    await supabase.auth.signOut();
+    setSession(null);
+    setUser(null);
+  }, []);
+
+  const resetIdleTimer = useCallback(() => {
+    if (idleTimer.current) clearTimeout(idleTimer.current);
+    if (!session) return;
+    idleTimer.current = setTimeout(() => {
+      performSignOut();
+    }, IDLE_TIMEOUT_MS);
+  }, [session, performSignOut]);
+
+  useEffect(() => {
+    if (!session) return;
+
+    const events = ["mousedown", "keydown", "scroll", "touchstart"] as const;
+    const handler = () => resetIdleTimer();
+
+    events.forEach((e) => window.addEventListener(e, handler, { passive: true }));
+    resetIdleTimer();
+
+    return () => {
+      events.forEach((e) => window.removeEventListener(e, handler));
+      if (idleTimer.current) clearTimeout(idleTimer.current);
+    };
+  }, [session, resetIdleTimer]);
 
   useEffect(() => {
     if (!supabase) {
@@ -25,7 +58,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -41,33 +76,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signUp = async (email: string, password: string) => {
-    if (!supabase) throw new Error("Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.");
+    if (!supabase)
+      throw new Error(
+        "Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY."
+      );
     const { error } = await supabase.auth.signUp({ email, password });
     if (error) throw error;
   };
 
   const signIn = async (email: string, password: string) => {
-    if (!supabase) throw new Error("Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.");
+    if (!supabase)
+      throw new Error(
+        "Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY."
+      );
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
   };
 
   const signOut = async () => {
-    if (!supabase) return;
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    await performSignOut();
   };
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      session,
-      loading,
-      signUp,
-      signIn,
-      signOut,
-      token: session?.access_token ?? null,
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        session,
+        loading,
+        signUp,
+        signIn,
+        signOut,
+        token: session?.access_token ?? null,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
