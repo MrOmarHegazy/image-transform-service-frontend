@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
-import { Upload, Wand2, Link2, Trash2, ShieldCheck, ArrowRight, ScanSearch, Focus, Eraser } from "lucide-react";
+import { Upload, Wand2, Link2, Trash2, ShieldCheck, ArrowRight, ScanSearch, Focus, Eraser, MousePointer2, Sparkles, Scissors } from "lucide-react";
 import logoImg from "@/assets/website logo - image transform.png";
 import heroVideo from "@/assets/grok hero page video.mp4";
 import { motion, useScroll, useSpring } from "framer-motion";
@@ -366,6 +366,50 @@ export default function Landing() {
               is fast, private, and entirely under your control.
             </p>
           </motion.div>
+        </div>
+      </section>
+
+      {/* Built With — infinite marquee */}
+      <section className="py-16 border-t overflow-hidden">
+        <div className="max-w-content mx-auto px-6 mb-10">
+          <p className="text-center text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
+            Built with
+          </p>
+        </div>
+        <div className="relative">
+          <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
+          <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
+          <div className="flex animate-marquee w-max">
+            {[...Array(2)].map((_, setIdx) => (
+              <div key={setIdx} className="flex items-center gap-14 px-7">
+                {[
+                  { name: "Cursor",   type: "icon" as const, Icon: MousePointer2 },
+                  { name: "Claude",   type: "img"  as const, slug: "anthropic" },
+                  { name: "Render",   type: "img"  as const, slug: "render" },
+                  { name: "Supabase", type: "img"  as const, slug: "supabase" },
+                  { name: "Vercel",   type: "img"  as const, slug: "vercel" },
+                  { name: "Grok",     type: "icon" as const, Icon: Sparkles },
+                  { name: "ClipDrop", type: "icon" as const, Icon: Scissors },
+                ].map((tech) => (
+                  <div key={tech.name} className="flex items-center gap-2.5 shrink-0 select-none">
+                    {tech.type === "img" ? (
+                      <img
+                        src={`https://cdn.simpleicons.org/${tech.slug}/6b7280`}
+                        alt={tech.name}
+                        className="w-5 h-5"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <tech.Icon className="w-5 h-5 text-muted-foreground" />
+                    )}
+                    <span className="font-heading font-medium text-sm text-muted-foreground whitespace-nowrap">
+                      {tech.name}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 

@@ -139,6 +139,14 @@
     background: hsl(var(--accent) / 0.5);
   }
 
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  .animate-marquee {
+    animation: marquee 35s linear infinite;
+  }
+
   .checker-bg {
     background-image: linear-gradient(45deg, hsl(var(--muted)) 25%, transparent 25%),
       linear-gradient(-45deg, hsl(var(--muted)) 25%, transparent 25%),
