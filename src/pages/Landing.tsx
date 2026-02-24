@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
-import { Upload, Wand2, Link2, Trash2, ShieldCheck, ArrowRight } from "lucide-react";
+import { Upload, Wand2, Link2, Trash2, ShieldCheck, ArrowRight, ScanSearch, Focus, Eraser } from "lucide-react";
 import logoImg from "@/assets/website logo - image transform.png";
+import heroVideo from "@/assets/grok hero page video.mp4";
 import { motion, useScroll, useSpring } from "framer-motion";
-import BeforeAfterSlider from "@/components/BeforeAfterSlider";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { ProcessSection } from "@/components/ui/how-we-do-it-process-overview";
@@ -31,6 +31,53 @@ export default function Landing() {
   const [phase, setPhase] = useState(0);
   const [charIndex, setCharIndex] = useState(0);
   const reveal = phase >= 3;
+
+  // Video ping-pong (forward → reverse → forward …)
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const directionRef = useRef<"forward" | "reverse">("forward");
+  const rafRef = useRef<number>(0);
+
+  const stepReverse = useCallback(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    const step = 1 / 30;
+    if (v.currentTime <= step) {
+      v.currentTime = 0;
+      directionRef.current = "forward";
+      v.play();
+      return;
+    }
+    v.currentTime -= step;
+    rafRef.current = requestAnimationFrame(stepReverse);
+  }, []);
+
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+
+    const onEnded = () => {
+      directionRef.current = "reverse";
+      rafRef.current = requestAnimationFrame(stepReverse);
+    };
+
+    v.addEventListener("ended", onEnded);
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && v.paused && directionRef.current === "forward") {
+          v.play();
+        }
+      },
+      { threshold: 0.3 }
+    );
+    observer.observe(v);
+
+    return () => {
+      v.removeEventListener("ended", onEnded);
+      cancelAnimationFrame(rafRef.current);
+      observer.disconnect();
+    };
+  }, [stepReverse]);
 
   useEffect(() => {
     if (!reveal) document.body.style.overflow = "hidden";
@@ -209,16 +256,61 @@ export default function Landing() {
         </motion.div>
       </section>
 
-      {/* Before / After */}
+      {/* Video showcase */}
       <section className="py-28 md:py-36">
-        <div className="max-w-content mx-auto px-6">
+        <div className="max-w-[1100px] mx-auto px-6">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-80px" }}
             transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
-            <BeforeAfterSlider />
+            <div className="rounded-[18px] overflow-hidden border shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
+              <video
+                ref={videoRef}
+                src={heroVideo}
+                muted
+                playsInline
+                className="w-full block"
+                style={{ aspectRatio: "752 / 416" }}
+              />
+            </div>
+
+            <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center">
+                  <ScanSearch className="h-[18px] w-[18px] text-accent-foreground" />
+                </div>
+                <div>
+                  <h3 className="font-heading font-medium text-[15px] mb-1">Smart detection</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">
+                    Intelligently identifies every subject in a scene — people, objects, and fine details.
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center">
+                  <Focus className="h-[18px] w-[18px] text-accent-foreground" />
+                </div>
+                <div>
+                  <h3 className="font-heading font-medium text-[15px] mb-1">Focus on what matters</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">
+                    Preserves your subject with pixel-perfect precision, keeping every edge crisp.
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center">
+                  <Eraser className="h-[18px] w-[18px] text-accent-foreground" />
+                </div>
+                <div>
+                  <h3 className="font-heading font-medium text-[15px] mb-1">Remove the rest</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">
+                    Strips away backgrounds cleanly — no artifacts, no halos, just your subject.
+                  </p>
+                </div>
+              </div>
+            </div>
           </motion.div>
         </div>
       </section>
